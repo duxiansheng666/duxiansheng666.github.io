@@ -1,11 +1,14 @@
 /* ============================================================
-   RONG 的博客 · 自定义样式
+   RONG 的博客 · 通用自定义样式
    位置：source/css/custom.css
-   引入：_config.butterfly.yml 的 inject.head
-   主题色：淡紫 #a594ff（与粒子背景 #a594ff 同色系）
+   引入：_config.butterfly.yml 的 inject.head（在 rong.css 之前）
+   范围：文章页 / 翻页列表 / 侧边栏等「首页之外」的细节
+   首页改版样式在 source/css/rong.css，不要混在一起
+   主题色：淡紫 #a594ff
    ============================================================ */
 
-/* ---------- 1. 文章卡片：悬浮上浮 + 紫色光晕 ---------- */
+/* ---------- 1. 文章卡片：悬浮上浮 + 紫色光晕 ----------
+   首页第 1 页已改为自定义布局；这里作用于拆页第 2 页起的卡片列表 */
 #recent-posts .recent-post-item {
   transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2),
               box-shadow 0.4s ease;
@@ -16,7 +19,7 @@
   box-shadow: 0 12px 32px rgba(165, 148, 255, 0.35);
 }
 
-/* ---------- 2. 头像：鼠标悬浮旋转一圈 ----------
+/* ---------- 2. 侧边栏头像：鼠标悬浮旋转一圈 ----------
    说明：主题的 avatar.effect: true 是「无限旋转」，不是悬浮转一圈，
         所以这里用 custom.css 实现「悬浮转一圈」，配置里 avatar.effect 保持 false。
         想改成一直转：把 avatar.effect 改成 true 即可。 */
@@ -34,19 +37,7 @@
               0 6px 20px rgba(165, 148, 255, 0.35);
 }
 
-/* ---------- 3. 首页大标题：淡紫光晕 ---------- */
-#site-title {
-  text-shadow: 0 0 18px rgba(165, 148, 255, 0.55),
-               0 0 46px rgba(165, 148, 255, 0.28);
-}
-
-/* 打字机副标题 */
-#site-subtitle {
-  text-shadow: 0 0 12px rgba(165, 148, 255, 0.5);
-  letter-spacing: 0.06em;
-}
-
-/* ---------- 4. 链接与正文点缀 ---------- */
+/* ---------- 3. 文章正文点缀 ---------- */
 #article-container a {
   color: #8a76f0;
   border-bottom: 1px dashed rgba(165, 148, 255, 0.5);
@@ -63,7 +54,7 @@
   background: rgba(165, 148, 255, 0.07);
 }
 
-/* ---------- 5. 侧边栏卡片悬浮 ---------- */
+/* ---------- 4. 侧边栏卡片悬浮 ---------- */
 .card-widget {
   transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2),
               box-shadow 0.4s ease;
@@ -74,7 +65,7 @@
   box-shadow: 0 10px 26px rgba(165, 148, 255, 0.3);
 }
 
-/* ---------- 6. 滚动条：淡紫 ---------- */
+/* ---------- 5. 滚动条：淡紫 ---------- */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

@@ -1,0 +1,1281 @@
+/* ==========================================================================
+   RONG 首页改版样式
+   文件：source/css/rong.css
+   引入：_config.butterfly.yml → inject.head
+   配套：themes/butterfly/layout/includes/rong-home.pug（结构）
+         source/js/rong.js（黑胶播放器交互 / 运行天数）
+   --------------------------------------------------------------------------
+   设计基调
+     背景    source/img/bg-sky.jpg（固定不滚动）
+     主色    淡紫 #a594ff  →  天蓝 #6cb7ff（渐变）
+     容器    半透明白 + 背景模糊（毛玻璃），全站统一
+     横幅    顶部 banner，底部用「同一张天空图 + 渐变蒙版」与背景无缝衔接
+   ========================================================================== */
+
+/* ---------- 0. 设计变量 ---------- */
+:root {
+  --rong-accent: #a594ff;
+  --rong-accent-2: #6cb7ff;
+  --rong-accent-deep: #6e5cd6;
+  --rong-ink: #2c3050;
+  --rong-ink-2: #565d80;
+  --rong-ink-3: #8b90ab;
+  --rong-card-bg: rgba(255, 255, 255, 0.72);
+  --rong-card-bg-solid: rgba(255, 255, 255, 0.63);
+  --rong-card-bd: rgba(255, 255, 255, 0.72);
+  --rong-shadow: 0 10px 34px rgba(44, 60, 130, 0.14);
+  --rong-radius: 20px;
+
+  /* 页面背景图：与 _config.butterfly.yml 的 background 必须指向同一张图。
+     换背景时这两处一起改。 */
+  --rong-sky-img: url('/img/bg-sky.jpg');
+
+  /* 覆盖在背景之上的白色薄纱（让页面下半部分的远山不至于太深，
+     卡片放哪儿都保持通透）。横幅底部的过渡层会复用同一个值，
+     所以接缝处不会出现亮度差。 */
+  --rong-veil: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.10) 26%,
+    rgba(255, 255, 255, 0.34) 58%,
+    rgba(255, 255, 255, 0.54) 100%
+  );
+}
+
+/* ---------- 1. 页面整体基调 ---------- */
+/* 天空图由主题 background 配置提供（_config.butterfly.yml → background: /img/bg-sky.jpg）
+   这里在背景层上方叠一层很淡的白色薄纱，让页面下半部分的远山不至于太深，
+   卡片放在任何位置都能保持统一的通透感。 */
+#web_bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--rong-veil);
+}
+
+/* ---------- 2. 顶部横幅 ---------- */
+#page-header.full_page {
+  height: clamp(360px, 42vw, 560px);
+  /* 主题默认是 fixed（视差）；这里改成跟随滚动，看成一整条横幅 */
+  background-attachment: scroll;
+  /* 横幅图是 16:9，容器更扁，靠 background-position 决定露出哪一段。
+     往上取一点，保证人物头部完整、标题落在画面下部的云层区域。 */
+  background-position: center 6%;
+}
+
+#page-header.full_page #nav {
+  position: relative;
+  z-index: 3;
+}
+
+/* 2.1 文字遮罩：上端压暗保证导航可读，下端压暗保证大标题可读。
+   中间留空，不干扰画面主体。 */
+#page-header.full_page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(22, 28, 62, 0.46) 0%,
+    rgba(22, 28, 62, 0.20) 7%,
+    rgba(22, 28, 62, 0.04) 14%,
+    rgba(22, 28, 62, 0) 26%,
+    rgba(22, 28, 62, 0) 44%,
+    rgba(22, 28, 62, 0.30) 74%,
+    rgba(22, 28, 62, 0.58) 100%
+  );
+}
+
+/* 2.2 与下方天空无缝融合（关键）
+   做法：在横幅底部再铺一层「和 #web_bg 完全一致」的背景 ——
+        同一张天空图 + 同样的 fixed 定位 + 同样的白色薄纱渐变，
+        然后用 mask 渐变让这层从「完全透明」平滑过渡到「完全不透明」。
+        因为两张图的定位基准都是视口、缩放方式也一样，所以过渡结束时
+        这层与页面真正的背景像素完全对齐，不会出现生硬的分割线/断层。
+   ⚠️ 这里的白色薄纱必须和 #web_bg::after 用同一组色标，
+      否则接缝处会出现亮度差（看起来像一条横向色带）。 */
+#page-header.full_page::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40%;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    var(--rong-veil),
+    var(--rong-sky-img);
+  background-attachment: fixed, fixed;
+  background-position: center, center;
+  background-size: 100% 100%, cover;
+  background-repeat: no-repeat, no-repeat;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.22) 32%,
+    rgba(0, 0, 0, 0.62) 66%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.22) 32%,
+    rgba(0, 0, 0, 0.62) 66%,
+    #000 100%
+  );
+}
+
+/* 2.3 站点标题位置：放在横幅下部的云层区域，避开人物面部 */
+#page-header.full_page #site-info {
+  top: auto;
+  bottom: 34%;
+  z-index: 2;
+}
+
+#page-header.full_page #site-title {
+  text-shadow: 0 2px 18px rgba(12, 18, 48, 0.5), 0 0 22px rgba(165, 148, 255, 0.5);
+}
+
+#page-header.full_page #site-subtitle {
+  color: #f0eeff;
+  text-shadow: 0 1px 12px rgba(12, 18, 48, 0.6), 0 0 14px rgba(165, 148, 255, 0.5);
+}
+
+/* 横幅已经不是满屏高度，向下箭头没有意义了，隐藏 */
+#page-header.full_page #scroll-down {
+  display: none;
+}
+
+/* ---------- 3. 内容容器：去掉侧边栏，改为纵向单列 ---------- */
+/* :has() 只在「首页」命中，不会影响文章页（文章页保留主题原有的侧边栏布局）。
+   若不支持 :has() 的旧浏览器会退回主题默认的 1200px / 40px 15px，只是略窄一点。 */
+#content-inner.layout:has(> .rong-home) {
+  max-width: 1240px;
+  padding: 34px 22px 76px;
+}
+
+#content-inner.layout > .rong-home {
+  width: 100%;
+}
+
+.rong-home {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* 板块入场：轻微上浮淡入。纯 CSS 动画，即使 JS 失效也能正常显示 */
+@keyframes rongRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rong-home > * {
+  animation: rongRise 0.62s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.rong-home > *:nth-child(1) { animation-delay: 0.04s; }
+.rong-home > *:nth-child(2) { animation-delay: 0.12s; }
+.rong-home > *:nth-child(3) { animation-delay: 0.20s; }
+.rong-home > *:nth-child(4) { animation-delay: 0.28s; }
+.rong-home > *:nth-child(5) { animation-delay: 0.36s; }
+
+/* ---------- 4. 通用卡片 ---------- */
+.rong-card {
+  position: relative;
+  background: var(--rong-card-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid var(--rong-card-bd);
+  border-radius: var(--rong-radius);
+  box-shadow: var(--rong-shadow);
+  color: var(--rong-ink);
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.1), box-shadow 0.42s ease;
+}
+
+.rong-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 44px rgba(44, 60, 130, 0.20);
+}
+
+/* 大板块不做整块上浮，只轻微加强阴影，避免大面积晃动 */
+.rong-section.rong-card:hover {
+  transform: none;
+  box-shadow: 0 14px 38px rgba(44, 60, 130, 0.17);
+}
+
+.rong-empty {
+  margin: 0;
+  padding: 26px 0;
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--rong-ink-3);
+}
+
+/* ---------- 5. 第一行：头像信息框 + 音乐播放器 ---------- */
+.rong-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  gap: 22px;
+}
+
+/* 5.1 头像信息框 */
+.rong-profile {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 28px 26px;
+  overflow: hidden;
+}
+
+.rong-profile-glow {
+  position: absolute;
+  top: -90px;
+  right: -70px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(165, 148, 255, 0.5), rgba(108, 183, 255, 0) 70%);
+}
+
+.rong-avatar-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: 104px;
+  height: 104px;
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rong-accent), var(--rong-accent-2));
+  box-shadow: 0 8px 24px rgba(138, 118, 240, 0.35);
+}
+
+/* 圆形容器：负责裁切。必须单独一层，因为 overflow 的裁切边界是 padding box，
+   如果直接放在带 4px 内边距的 .rong-avatar-ring 上，会把这圈渐变色环一起裁掉。 */
+.rong-avatar-clip {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* 头像原图是「半身夜景」，直接铺满圆框会显得又小又暗，
+   所以放大 1.6 倍并把缩放中心对准人物面部。 */
+.rong-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.6);
+  transform-origin: 38% 40%;
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rong-avatar-ring:hover .rong-avatar {
+  transform: scale(1.6) rotate(360deg);
+}
+
+.rong-profile-body {
+  min-width: 0;
+}
+
+.rong-profile-name {
+  margin: 0 0 6px;
+  font-size: 1.62em;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--rong-ink);
+}
+
+.rong-profile-bio {
+  margin: 0 0 12px;
+  font-size: 0.9em;
+  line-height: 1.62;
+  color: var(--rong-ink-2);
+}
+
+.rong-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 15px;
+}
+
+.rong-profile-tags span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75em;
+  color: var(--rong-accent-deep);
+  background: rgba(165, 148, 255, 0.14);
+  border: 1px solid rgba(165, 148, 255, 0.28);
+}
+
+.rong-profile-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.rong-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.rong-stat-num {
+  font-size: 1.34em;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--rong-accent-deep), var(--rong-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rong-stat-label {
+  font-size: 0.76em;
+  color: var(--rong-ink-3);
+}
+
+/* 5.2 音乐播放器（QQ音乐黑胶唱片样式，仅 UI） */
+.rong-music {
+  padding: 22px 26px 18px;
+  overflow: hidden;
+}
+
+.rong-music-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.rong-music-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rong-ink-3);
+}
+
+.rong-wave {
+  display: inline-block;
+  width: 3px;
+  height: 8px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--rong-accent), var(--rong-accent-2));
+}
+
+.rong-music-kicker .rong-wave:last-of-type {
+  margin-right: 6px;
+}
+
+.rong-music[data-playing='true'] .rong-wave {
+  animation: rongWave 0.95s ease-in-out infinite;
+}
+
+.rong-music[data-playing='true'] .rong-wave:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.rong-music[data-playing='true'] .rong-wave:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes rongWave {
+  0%, 100% { height: 6px; }
+  50%      { height: 17px; }
+}
+
+.rong-music-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7em;
+  color: #3f74c8;
+  background: rgba(108, 183, 255, 0.16);
+  border: 1px solid rgba(108, 183, 255, 0.3);
+}
+
+.rong-music-stage {
+  display: grid;
+  grid-template-columns: 158px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+/* 黑胶唱盘 */
+.rong-vinyl-wrap {
+  position: relative;
+  width: 158px;
+  height: 158px;
+  transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+/* 播放时：唱盘整体上浮 */
+.rong-music[data-playing='true'] .rong-vinyl-wrap {
+  transform: translateY(-9px);
+}
+
+.rong-vinyl {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #23243c 0 17%, rgba(0, 0, 0, 0) 17.6%),
+    repeating-radial-gradient(circle at 50% 50%, #131427 0 2px, #1e2039 2px 4px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 26px rgba(20, 24, 60, 0.35);
+  animation: rongSpin 5.6s linear infinite;
+  animation-play-state: paused;
+}
+
+/* 播放时：唱盘旋转（用 play-state 而不是增删动画，暂停/继续才不会跳帧） */
+.rong-music[data-playing='true'] .rong-vinyl {
+  animation-play-state: running;
+}
+
+@keyframes rongSpin {
+  to { transform: rotate(360deg); }
+}
+
+.rong-vinyl-grooves {
+  position: absolute;
+  inset: 4.5%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.055) 0 1px,
+    rgba(255, 255, 255, 0) 1px 3px
+  );
+}
+
+.rong-vinyl-cover {
+  position: relative;
+  width: 58%;
+  height: 58%;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+}
+
+.rong-vinyl-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%;
+  background: #f3f1fb;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45);
+}
+
+/* 唱针：支点在右上角，播放时从「抬离唱片」转到「贴上唱片」 */
+.rong-tonearm {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 26px;
+  height: 122px;
+  z-index: 3;
+  transform-origin: 13px 13px;
+  transform: rotate(-26deg);
+  transition: transform 0.85s cubic-bezier(0.34, 0.08, 0.2, 1);
+  pointer-events: none;
+}
+
+.rong-music[data-playing='true'] .rong-tonearm {
+  transform: rotate(4deg);
+}
+
+.rong-tonearm-pivot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #e4e8f8, #7f87b8);
+  box-shadow: 0 3px 9px rgba(30, 35, 80, 0.38);
+}
+
+.rong-tonearm-rod {
+  position: absolute;
+  top: 13px;
+  left: 11px;
+  width: 4px;
+  height: 76px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #c6cce9, #8b93c4);
+}
+
+.rong-tonearm-head {
+  position: absolute;
+  top: 84px;
+  left: 5px;
+  width: 16px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(160deg, #939bcc, #5b6295);
+  box-shadow: 0 3px 8px rgba(30, 35, 80, 0.3);
+}
+
+/* 播放器文字与控件 */
+.rong-music-body {
+  min-width: 0;
+}
+
+.rong-track-title {
+  font-size: 1.06em;
+  font-weight: 700;
+  color: var(--rong-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rong-track-artist {
+  margin-bottom: 13px;
+  font-size: 0.81em;
+  color: var(--rong-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rong-progress {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(120, 130, 180, 0.2);
+  cursor: pointer;
+}
+
+.rong-progress-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rong-accent), var(--rong-accent-2));
+}
+
+.rong-progress-knob {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(80, 90, 160, 0.45);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.rong-progress:hover .rong-progress-knob {
+  opacity: 1;
+}
+
+.rong-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  font-size: 0.73em;
+  color: var(--rong-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.rong-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.rong-ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--rong-accent-deep);
+  background: rgba(165, 148, 255, 0.14);
+  transition: all 0.28s ease;
+}
+
+.rong-ctl:hover {
+  background: rgba(165, 148, 255, 0.26);
+  transform: translateY(-2px);
+}
+
+.rong-ctl-play {
+  width: 50px;
+  height: 50px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--rong-accent-deep), var(--rong-accent-2));
+  box-shadow: 0 8px 20px rgba(112, 110, 230, 0.4);
+}
+
+.rong-ctl-play:hover {
+  background: linear-gradient(135deg, #7d68ee, #57a9f8);
+  box-shadow: 0 12px 26px rgba(112, 110, 230, 0.5);
+}
+
+.rong-ico-pause {
+  display: none;
+}
+
+.rong-music[data-playing='true'] .rong-ico-play {
+  display: none;
+}
+
+.rong-music[data-playing='true'] .rong-ico-pause {
+  display: block;
+}
+
+.rong-music-note {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.69em;
+  color: var(--rong-ink-3);
+  opacity: 0.86;
+}
+
+/* ---------- 6. 板块通用结构（关于我 / 文章 / 归档 / 网站信息） ---------- */
+.rong-section {
+  padding: 26px 28px 28px;
+}
+
+.rong-section-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rong-section-head-left {
+  flex: 0 0 auto;
+}
+
+.rong-section-title {
+  position: relative;
+  margin: 0;
+  padding-left: 14px;
+  font-size: 1.24em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--rong-ink);
+}
+
+.rong-section-title::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 5px;
+  height: 1.06em;
+  border-radius: 3px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, var(--rong-accent), var(--rong-accent-2));
+}
+
+.rong-section-sub {
+  margin: 4px 0 0 14px;
+  font-size: 0.72em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rong-ink-3);
+}
+
+.rong-section-line {
+  flex: 1 1 auto;
+  height: 1px;
+  margin-bottom: 9px;
+  background: linear-gradient(90deg, rgba(165, 148, 255, 0.5), rgba(108, 183, 255, 0));
+}
+
+.rong-more {
+  flex: 0 0 auto;
+  /* 用 auto 外边距把按钮顶到行尾。没有 .rong-section-line 的板块也能右对齐 */
+  margin-left: auto;
+  margin-bottom: 4px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 0.78em;
+  color: var(--rong-accent-deep);
+  text-decoration: none;
+  background: rgba(165, 148, 255, 0.12);
+  border: 1px solid rgba(165, 148, 255, 0.26);
+  transition: all 0.3s ease;
+}
+
+.rong-more:hover {
+  background: rgba(165, 148, 255, 0.24);
+  transform: translateX(3px);
+}
+
+/* ---------- 7. 关于我 ---------- */
+.rong-about {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 26px;
+  align-items: stretch;
+}
+
+.rong-about-cover {
+  position: relative;
+  min-height: 226px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 26px rgba(44, 60, 130, 0.18);
+}
+
+.rong-about-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+.rong-about-cover:hover img {
+  transform: scale(1.06);
+}
+
+.rong-about-body p {
+  margin: 0 0 12px;
+  font-size: 0.93em;
+  line-height: 1.85;
+  color: var(--rong-ink-2);
+}
+
+.rong-about-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rong-about-list li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.88em;
+  color: var(--rong-ink-2);
+}
+
+.rong-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rong-accent), var(--rong-accent-2));
+  box-shadow: 0 0 0 3px rgba(165, 148, 255, 0.18);
+}
+
+.rong-about-txt {
+  color: var(--rong-ink-3);
+}
+
+/* ---------- 8. 文章 ----------
+   默认 3 列网格：文章数满 3 篇以上时铺成整齐的一到两行。
+   只有 1 篇时改走「特色大卡」横向布局（见本节末尾），
+   否则一张小卡会孤零零挂在 3 列网格的第一格里，右侧全是空档。 */
+.rong-posts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.rong-post {
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--rong-card-bg-solid);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 22px rgba(44, 60, 130, 0.1);
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.1), box-shadow 0.42s ease;
+}
+
+.rong-post:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(44, 60, 130, 0.2);
+}
+
+.rong-post-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.rong-post-cover {
+  position: relative;
+  height: auto;
+  min-height: 156px;
+  aspect-ratio: 16 / 9;
+  background-color: rgba(165, 148, 255, 0.18);
+  background-size: cover;
+  background-position: center;
+}
+
+.rong-post-cat {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.69em;
+  color: #fff;
+  background: rgba(58, 50, 128, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.rong-post-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 14px 16px 16px;
+}
+
+.rong-post-title {
+  display: -webkit-box;
+  margin: 0 0 8px;
+  overflow: hidden;
+  font-size: 1.01em;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--rong-ink);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  transition: color 0.3s ease;
+}
+
+.rong-post-desc {
+  display: -webkit-box;
+  margin: 0 0 14px;
+  overflow: hidden;
+  font-size: 0.83em;
+  line-height: 1.7;
+  color: var(--rong-ink-3);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.rong-post-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  font-size: 0.75em;
+  color: var(--rong-ink-3);
+}
+
+.rong-post-link:hover .rong-post-title {
+  color: var(--rong-accent-deep);
+}
+
+.rong-post-read {
+  color: var(--rong-accent-deep);
+  transition: transform 0.3s ease;
+}
+
+.rong-post:hover .rong-post-read {
+  transform: translateX(3px);
+}
+
+/* ---- 单篇文章：特色大卡（封面在左 / 文字在右的横向布局） ----
+   用 :has(> .rong-post:only-child) 仅在「文章板块只挂一张卡」时命中，
+   文章变多以后自动回到上面的 3 列网格，不用改任何模板代码。 */
+.rong-posts:has(> .rong-post:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-link {
+  display: grid;
+  grid-template-columns: minmax(0, 43%) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-cover {
+  height: 100%;
+  min-height: 100%;
+  aspect-ratio: auto;
+  background-position: center 34%;
+}
+
+/* 特色卡的封面右侧做一层横向渐隐，与文字区的卡片底色无缝接上 */
+.rong-posts:has(> .rong-post:only-child) .rong-post-cover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, var(--rong-card-bg-solid) 100%);
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-body {
+  justify-content: center;
+  padding: 28px 32px 28px 24px;
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-title {
+  margin-bottom: 12px;
+  font-size: 1.45em;
+  line-height: 1.42;
+  -webkit-line-clamp: 3;
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-desc {
+  max-width: 46em;
+  margin-bottom: 18px;
+  font-size: 0.92em;
+  line-height: 1.78;
+  -webkit-line-clamp: 4;
+}
+
+.rong-posts:has(> .rong-post:only-child) .rong-post-foot {
+  font-size: 0.82em;
+}
+
+/* 只剩一篇时给它一点「唯一内容」的重量感：标题略粗、卡片投影稍深 */
+.rong-posts:has(> .rong-post:only-child) .rong-post {
+  box-shadow: 0 12px 32px rgba(44, 60, 130, 0.14);
+}
+
+/* ---------- 9. 归档 ---------- */
+.rong-archive {
+  display: grid;
+  /* 用 auto-fit 而不是 auto-fill：只有一个月时它能撑满整行；
+     月份多了会自动排成多列，两种情况都不会留半边空档。 */
+  grid-template-columns: repeat(auto-fit, minmax(274px, 1fr));
+  gap: 18px 28px;
+}
+
+.rong-archive-key {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+  padding-bottom: 9px;
+  border-bottom: 1px dashed rgba(140, 150, 200, 0.35);
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--rong-ink);
+}
+
+.rong-archive-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rong-accent), var(--rong-accent-2));
+}
+
+.rong-archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* 只有一个月时这一列会撑满整行，限宽避免标题与日期被拉到两极 */
+  max-width: 540px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rong-archive-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85em;
+}
+
+.rong-archive-link {
+  overflow: hidden;
+  color: var(--rong-ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color 0.25s ease, padding-left 0.25s ease;
+}
+
+.rong-archive-link:hover {
+  color: var(--rong-accent-deep);
+  padding-left: 5px;
+}
+
+.rong-archive-list time {
+  flex: 0 0 auto;
+  font-size: 0.84em;
+  color: var(--rong-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 10. 网站信息 ---------- */
+.rong-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+  gap: 14px;
+}
+
+.rong-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 18px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.35s ease;
+}
+
+.rong-info-item:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 24px rgba(44, 60, 130, 0.14);
+}
+
+.rong-info-label {
+  font-size: 0.74em;
+  letter-spacing: 0.08em;
+  color: var(--rong-ink-3);
+}
+
+.rong-info-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 1.48em;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--rong-accent-deep), var(--rong-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rong-info-value--sm {
+  font-size: 1em;
+}
+
+/* 「已运行 N 天」：数值和单位排在同一行 */
+.rong-info-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.rong-info-unit {
+  font-size: 0.71em;
+  color: var(--rong-ink-3);
+}
+
+/* ---------- 11. 页面底部：换掉主题默认的蓝色底 ---------- */
+#footer {
+  background-color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.42) 38%,
+    rgba(255, 255, 255, 0.74) 100%
+  );
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+#footer span,
+#footer div,
+#footer p,
+#footer time {
+  color: var(--rong-ink-2);
+}
+
+#footer a {
+  color: var(--rong-accent-deep);
+}
+
+#footer a:hover {
+  color: #4f3fc0;
+}
+
+/* ---------- 12. 暗色模式适配 ---------- */
+html[data-theme='dark'] {
+  --rong-ink: #e9ebf8;
+  --rong-ink-2: #bcc1d8;
+  --rong-ink-3: #8e94b0;
+  --rong-card-bg: rgba(30, 34, 58, 0.74);
+  --rong-card-bg-solid: rgba(30, 34, 58, 0.7);
+  --rong-card-bd: rgba(130, 140, 210, 0.22);
+  --rong-shadow: 0 10px 34px rgba(0, 0, 0, 0.42);
+  --rong-veil: linear-gradient(
+    180deg,
+    rgba(8, 10, 24, 0) 0%,
+    rgba(8, 10, 24, 0.42) 55%,
+    rgba(8, 10, 24, 0.74) 100%
+  );
+}
+
+html[data-theme='dark'] #footer {
+  background-image: linear-gradient(180deg, rgba(14, 16, 32, 0), rgba(14, 16, 32, 0.84));
+  border-top-color: rgba(130, 140, 210, 0.2);
+}
+
+html[data-theme='dark'] .rong-post {
+  border-color: rgba(130, 140, 210, 0.22);
+}
+
+html[data-theme='dark'] .rong-info-item {
+  background: rgba(30, 34, 58, 0.62);
+  border-color: rgba(130, 140, 210, 0.22);
+}
+
+html[data-theme='dark'] .rong-info-item:hover {
+  background: rgba(38, 43, 72, 0.82);
+}
+
+/* ---------- 13. 响应式 ---------- */
+@media (max-width: 900px) {
+  .rong-row {
+    grid-template-columns: 1fr;
+  }
+
+  .rong-about {
+    grid-template-columns: 1fr;
+  }
+
+  .rong-about-cover {
+    min-height: 190px;
+  }
+
+  .rong-music-stage {
+    grid-template-columns: 136px minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .rong-vinyl-wrap {
+    width: 136px;
+    height: 136px;
+  }
+}
+
+@media (max-width: 768px) {
+  #content-inner.layout:has(> .rong-home) {
+    padding: 22px 12px 60px;
+  }
+
+  #page-header.full_page {
+    height: 300px;
+  }
+
+  .rong-section {
+    padding: 20px 16px 22px;
+  }
+
+  .rong-section-head {
+    flex-wrap: wrap;
+  }
+
+  /* 单篇特色大卡在窄屏改回「上图下文」的竖向卡片 */
+  .rong-posts:has(> .rong-post:only-child) .rong-post-link {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rong-posts:has(> .rong-post:only-child) .rong-post-cover {
+    height: auto;
+    min-height: 168px;
+    aspect-ratio: 16 / 9;
+  }
+
+  .rong-posts:has(> .rong-post:only-child) .rong-post-cover::after {
+    display: none;
+  }
+
+  .rong-posts:has(> .rong-post:only-child) .rong-post-body {
+    padding: 18px 20px 20px;
+  }
+
+  .rong-posts:has(> .rong-post:only-child) .rong-post-title {
+    font-size: 1.2em;
+  }
+
+  .rong-posts:has(> .rong-post:only-child) .rong-post-desc {
+    font-size: 0.87em;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@media (max-width: 560px) {
+  .rong-profile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rong-profile-tags,
+  .rong-profile-stats {
+    justify-content: center;
+  }
+
+  .rong-music-stage {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 20px;
+  }
+
+  .rong-music-body {
+    width: 100%;
+  }
+
+  #page-header.full_page {
+    height: 250px;
+  }
+}
+
+@media (max-width: 980px) {
+  .rong-posts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .rong-posts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 14. 尊重「减少动态效果」系统偏好 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .rong-wave,
+  .rong-vinyl,
+  .rong-home > * {
+    animation: none !important;
+  }
+
+  .rong-card,
+  .rong-post,
+  .rong-info-item {
+    transition: none !important;
+  }
+}
