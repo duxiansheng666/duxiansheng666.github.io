@@ -657,6 +657,25 @@
   opacity: 0.86;
 }
 
+/* 音乐版权署名（CC BY 4.0 要求保留署名） */
+.rong-music-credit {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 0.62em;
+  color: var(--rong-ink-3);
+  opacity: 0.6;
+}
+
+.rong-music-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rong-music-credit a:hover {
+  opacity: 1;
+}
+
 /* ---------- 6. 板块通用结构（关于我 / 文章 / 归档 / 网站信息） ---------- */
 .rong-section {
   padding: 26px 28px 28px;
