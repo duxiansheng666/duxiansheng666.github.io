@@ -3,13 +3,13 @@
    文件：source/js/rong.js
    引入：_config.butterfly.yml → inject.bottom
    职责：
-     1. 黑胶唱片音乐播放器（HTML5 Audio 驱动）
+     1. 黑胶唱片音乐播放器（HTML5 Audio 驱动，单曲）
      2. 「网站信息」里的运行天数计算
 
-   音频文件：source/music/*.mp3（部署后路径为 /music/*.mp3）
-   音乐版权：曲目为 Kevin MacLeod（https://incompetech.com）的作品，
+   音频文件：source/music/ishikari-lore.mp3（部署后路径为 /music/ishikari-lore.mp3）
+   音乐版权：Kevin MacLeod（https://incompetech.com）的作品，
              以 CC BY 4.0 授权免费使用（可商用），署名已写在页面上。
-             想换成自己的音乐：把 mp3 放进 source/music/，再改下面 TRACKS。
+             想换成自己的音乐：把 mp3 放进 source/music/，再改下面的 TRACK。
    ========================================================================== */
 (function () {
   'use strict';
@@ -17,15 +17,20 @@
   /* ------------------------------------------------------------------ */
   /* 1. 黑胶唱片音乐播放器                                              */
   /* ------------------------------------------------------------------ */
-  var TRACKS = [
-    { title: '千羽鹤',   artist: 'Kevin MacLeod', src: '/music/senbazuru.mp3' },
-    { title: '石狩民谣', artist: 'Kevin MacLeod', src: '/music/ishikari-lore.mp3' },
-    { title: '寻迹',     artist: 'Kevin MacLeod', src: '/music/finding-movement.mp3' }
-  ];
+  var TRACK = {
+    title: '石狩民谣',
+    artist: 'Kevin MacLeod',
+    src: '/music/ishikari-lore.mp3'
+  };
+
+  // 播放器下方那行提示的四种状态文案（避免播放中仍显示「点击我开始播放」）
+  var NOTE_IDLE = '点击我开始播放';
+  var NOTE_PLAYING = '正在播放';
+  var NOTE_PAUSED = '已暂停，点击继续';
+  var NOTE_ERROR = '音频加载失败，请刷新页面重试';
 
   var audio = null;      // 全局单例，避免切页时叠出多个播放实例
   var el = {};           // 当前页面的 DOM 引用
-  var index = 0;         // 当前曲目下标
   var bound = false;     // audio 的事件是否已绑定（只绑一次）
 
   function formatTime(sec) {
@@ -36,9 +41,19 @@
     return m + ':' + (s < 10 ? '0' + s : s);
   }
 
+  function setNote(text) {
+    if (el.note) el.note.textContent = text;
+  }
+
   function setPlaying(next) {
     if (el.root) el.root.dataset.playing = next ? 'true' : 'false';
     if (el.btnPlay) el.btnPlay.setAttribute('aria-label', next ? '暂停' : '播放');
+    if (next) {
+      setNote(NOTE_PLAYING);
+    } else {
+      // 播到 0 秒说明是待播状态，中途停下才算暂停
+      setNote(audio && audio.currentTime > 0 ? NOTE_PAUSED : NOTE_IDLE);
+    }
   }
 
   function paintProgress() {
@@ -50,17 +65,6 @@
     if (el.knob) el.knob.style.left = pct + '%';
     if (el.cur) el.cur.textContent = formatTime(cur);
     if (el.dur) el.dur.textContent = formatTime(dur);
-  }
-
-  function loadTrack(i, autoplay) {
-    index = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
-    var t = TRACKS[index];
-    audio.src = t.src;
-    if (el.title) el.title.textContent = t.title;
-    if (el.artist) el.artist.textContent = t.artist;
-    if (el.note) el.note.textContent = '点击我开始播放';
-    paintProgress();
-    if (autoplay) play();
   }
 
   function play() {
@@ -80,10 +84,15 @@
     audio.addEventListener('play', function () { setPlaying(true); });
     audio.addEventListener('playing', function () { setPlaying(true); });
     audio.addEventListener('pause', function () { setPlaying(false); });
-    audio.addEventListener('ended', function () { loadTrack(index + 1, true); });
+    audio.addEventListener('ended', function () {
+      // 单曲：播完回到开头并停下，不自动重播
+      audio.currentTime = 0;
+      paintProgress();
+      setPlaying(false);
+    });
     audio.addEventListener('error', function () {
       setPlaying(false);
-      if (el.note) el.note.textContent = '音频加载失败，请刷新页面重试';
+      setNote(NOTE_ERROR);
     });
   }
 
@@ -102,9 +111,7 @@
       fill: document.getElementById('rongProgressFill'),
       knob: document.getElementById('rongProgressKnob'),
       note: root.querySelector('.rong-music-note'),
-      btnPlay: document.getElementById('rongPlay'),
-      btnPrev: document.getElementById('rongPrev'),
-      btnNext: document.getElementById('rongNext')
+      btnPlay: document.getElementById('rongPlay')
     };
 
     if (!audio) {
@@ -115,19 +122,13 @@
     audio.pause();
     bindAudioEvents();
 
+    // 曲目信息是固定的，每次进页面直接写入，不依赖音频加载
+    if (el.title) el.title.textContent = TRACK.title;
+    if (el.artist) el.artist.textContent = TRACK.artist;
+
     if (el.btnPlay) {
       el.btnPlay.addEventListener('click', function () {
         if (audio.paused) { play(); } else { audio.pause(); }
-      });
-    }
-    if (el.btnPrev) {
-      el.btnPrev.addEventListener('click', function () {
-        loadTrack(index - 1, !audio.paused);
-      });
-    }
-    if (el.btnNext) {
-      el.btnNext.addEventListener('click', function () {
-        loadTrack(index + 1, !audio.paused);
       });
     }
     if (el.bar) {
@@ -143,15 +144,11 @@
       });
     }
 
+    // 只在首次进入时设置音源：同一 src 重复赋值不会触发重新加载
     if (!audio.src) {
-      loadTrack(0, false);
-    } else {
-      // 已有正在播放的曲目（例如从别的页面切回首页）→ 只恢复显示，不打断
-      var t = TRACKS[index];
-      if (el.title) el.title.textContent = t.title;
-      if (el.artist) el.artist.textContent = t.artist;
-      paintProgress();
+      audio.src = TRACK.src;
     }
+    paintProgress();
     setPlaying(!audio.paused);
   }
 
