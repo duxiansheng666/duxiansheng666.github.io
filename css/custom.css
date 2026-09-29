@@ -83,3 +83,122 @@
 ::-webkit-scrollbar-track {
   background: rgba(165, 148, 255, 0.08);
 }
+
+/* ---------- 6. 文章正文里的文字样式 ----------
+   Markdown 本身没有「改颜色」的语法，所以这里定义几个类，
+   写文章时用 <span class="xxx"> 包起来即可。用法见本文件末尾注释。
+
+   颜色全部取自 rong.css 的 :root 变量，改主题色只需改那一处。 */
+
+/* 灰色 —— 次要说明、注释、题外话、来源标注 */
+.t-gray {
+  color: var(--rong-ink-3);
+}
+
+/* 更淡的灰 —— 极小的补充备注，比 t-gray 再浅一档 */
+.t-muted {
+  color: var(--rong-ink-3);
+  opacity: 0.72;
+}
+
+/* 淡紫 —— 主题色强调，用于关键词、术语 */
+.t-accent {
+  color: var(--rong-accent-deep);
+  font-weight: 500;
+}
+
+/* 深色加粗 —— 真正的重点，比 Markdown 的 **加粗** 更醒目 */
+.t-strong {
+  color: var(--rong-ink);
+  font-weight: 600;
+}
+
+/* 小字 —— 字号缩一档，常和 t-gray 一起用 */
+.t-small {
+  font-size: 0.86em;
+}
+
+/* 居中 —— span 默认是行内元素，要转成块级才能居中 */
+.t-center {
+  display: block;
+  text-align: center;
+}
+
+/* 划掉 —— 表示作废、旧的说法 */
+.t-del {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* 下划线强调（淡紫波浪线） */
+.t-underline {
+  text-decoration: underline wavy var(--rong-accent);
+  text-underline-offset: 3px;
+}
+
+/* 整块灰色说明卡 —— 包一段话，比 span 更适合大段备注
+   用法：<div class="t-note">这里是一段说明</div> */
+.t-note {
+  margin: 1.1em 0;
+  padding: 0.85em 1.1em;
+  border-left: 3px solid var(--rong-accent);
+  border-radius: 0 10px 10px 0;
+  background: rgba(165, 148, 255, 0.09);
+  color: var(--rong-ink-2);
+  font-size: 0.94em;
+  line-height: 1.75;
+}
+
+.t-note p {
+  margin: 0;
+}
+
+.t-note p + p {
+  margin-top: 0.6em;
+}
+
+/* 深色模式下把灰色提亮一档，否则糊在背景里看不清 */
+[data-theme='dark'] .t-gray {
+  color: #b9bdd4;
+}
+
+[data-theme='dark'] .t-muted {
+  color: #9a9fb8;
+  opacity: 1;
+}
+
+[data-theme='dark'] .t-accent {
+  color: #b9aeff;
+}
+
+[data-theme='dark'] .t-strong {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .t-note {
+  background: rgba(165, 148, 255, 0.14);
+  color: #cdd1e4;
+}
+
+/* ============================================================
+   上面这些类怎么写进文章里（Markdown 原文照抄即可）
+
+   段落里的一句话：
+     这是普通文字，<span class="t-gray">这句是灰色</span>，后面恢复。
+
+   整段小灰字（三个类可叠加，用空格隔开）：
+     <span class="t-small t-gray t-center">—— 全文完 ——</span>
+
+   整段说明卡：
+     <div class="t-note">
+     这里是一整段备注，可以换行，也可以写多个 <p> 分段。
+     </div>
+
+   ⚠️ 两个注意点
+   1. <span> 和 </span> 必须写在同一段里，中间不要空行。
+      Markdown 遇到空行会把段落切开，HTML 标签就断了。
+   2. 类名前面那个点（.t-gray）只是 CSS 里的写法，
+      写进文章时不要带点，直接写 class="t-gray"。
+
+   改配色只需改 rong.css 的 :root 变量，这里会自动跟着变。
+   ============================================================ */
